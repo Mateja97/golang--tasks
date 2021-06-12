@@ -1,22 +1,18 @@
 package main
 
 import (
-	"../src/utils/Stack"
+	"../src/utils/EVM"
 	"fmt"
 )
 
 func main() {
 
-	var stack Stack.Stack// create a stack variable of type Stack
-
-	stack.Push("this")
-	stack.Push("is")
-	stack.Push("sparta!!")
-
-	for len(stack.Values) > 0 {
-		x, y := stack.Pop()
-		if y == true {
-			fmt.Println(x)
-		}
+	var evm EVM.EVM// create a stack variable of type Stack
+	evm = EVM.EVM{
+		Memory: EVM.NewMemory(),
+		Gas : 0 ,
 	}
+	evm.DecodeInput("6022600160200152")
+	fmt.Println(evm.Memory.GetStore())
+
 }
