@@ -80,6 +80,28 @@ func (e* EVM) DecodeInput(input string){
 		e.Stack.Push(value1.Hex()[2:])
 		e.Gas+=5
 		e.DecodeInput(input[2:])
+	}else if operation == "05" { //SDIV
+
+		v1,v2  := e.Stack.Pop(),e.Stack.Pop()
+
+		value1,_ := uint256.FromHex(Encode(v1))
+		value2,_ := uint256.FromHex(Encode(v2))
+
+		value1.SDiv(value1,value2)
+		e.Stack.Push(value1.Hex()[2:])
+		e.Gas+=5
+		e.DecodeInput(input[2:])
+	} else if operation == "0A" { //EXP
+
+		b,ex  := e.Stack.Pop(),e.Stack.Pop()
+
+		base,_ := uint256.FromHex(Encode(b))
+		exp,_ := uint256.FromHex(Encode(ex))
+		//TO DO WITH EXP OVER 256 bits(big ints)
+		base.Exp(base,exp)
+		e.Stack.Push(base.Hex()[2:])
+		e.Gas+=50*len(exp.Bytes())
+		e.DecodeInput(input[2:])
 	}
 
 }
