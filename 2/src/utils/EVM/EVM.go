@@ -2,14 +2,15 @@ package EVM
 
 import (
 	"../Stack"
+	"encoding/hex"
 	"github.com/holiman/uint256"
-	"math"
+	"golang.org/x/crypto/sha3"
 	"strconv"
 )
 
 type EVM struct{
 	Stack Stack.Stack
-	Gas int
+	Gas uint64
 	Memory* Memory
 }
 
@@ -47,7 +48,13 @@ func (e* EVM) DecodeInput(input string){
 		offset,_ := strconv.ParseUint(d,16,64)
 		value,_ := uint256.FromHex(Encode(v))
 
-		e.Memory.Set(offset,value.Bytes())
+		w := e.Memory.Set(offset,value.Bytes())
+		newCost := 3*w + w*w/512
+		cost := newCost - e.Memory.lastGasCost
+		e.Memory.lastGasCost = newCost
+		e.Gas += cost
+
+
 		e.DecodeInput(input[2:])
 
 	} else if operation == "53" { //MSTORE8
@@ -56,7 +63,12 @@ func (e* EVM) DecodeInput(input string){
 		offset,_ := strconv.ParseUint(d,16,64)
 		value,_ := uint256.FromHex(Encode(v))
 
-		e.Memory.SetStore(offset,byte(value.Uint64()))
+		w := e.Memory.Set8(offset,byte(value.Uint64()))
+		newCost := 3*w + w*w/512
+		cost := newCost - e.Memory.lastGasCost
+		e.Memory.lastGasCost = newCost
+		e.Gas += cost
+
 		e.DecodeInput(input[2:])
 	} else if operation == "01" { //ADD
 
@@ -64,7 +76,7 @@ func (e* EVM) DecodeInput(input string){
 
 		value1, _ := uint256.FromHex(Encode(v1))
 		value2, _ := uint256.FromHex(Encode(v2))
-		//TO DO WITH SUM OVER 256 bits(big ints)
+
 		value1.Add(value1, value2)
 		e.Stack.Push(value1.Hex()[2:])
 		e.Gas += 3
@@ -75,7 +87,7 @@ func (e* EVM) DecodeInput(input string){
 
 		value1,_ := uint256.FromHex(Encode(v1))
 		value2,_ := uint256.FromHex(Encode(v2))
-		//TO DO WITH PRODUCT OVER 256 bits(big ints)
+
 		value1.Mul(value1,value2)
 		e.Stack.Push(value1.Hex()[2:])
 		e.Gas+=5
@@ -97,17 +109,20 @@ func (e* EVM) DecodeInput(input string){
 
 		base,_ := uint256.FromHex(Encode(b))
 		exp,_ := uint256.FromHex(Encode(ex))
-		//TO DO WITH EXP OVER 256 bits(big ints)
+
 		base.Exp(base,exp)
 		e.Stack.Push(base.Hex()[2:])
-		e.Gas+=50*len(exp.Bytes())
+		e.Gas+=50*uint64(len(exp.Bytes()))
 		e.DecodeInput(input[2:])
 	}
 
 }
 
 func (e EVM) KECCAK256() string {
-	return ""
+	hash := sha3.NewLegacyKeccak256()
+	hash.Write(e.Memory.store)
+	buf := hash.Sum(nil)
+	return hex.EncodeToString(buf)
 }
 //Adding 0x as prefix
 func Encode(str string) string {
@@ -118,10 +133,4 @@ func Encode(str string) string {
 	}
 	enc := "0x" + str[br:]
 	return enc
-}
-func WordSize(size uint64) uint64 {
-	if size > math.MaxUint64-31 {
-		return math.MaxUint64/32 + 1
-	}
-	return (size + 31) / 32
 }
