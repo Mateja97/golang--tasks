@@ -23,7 +23,16 @@ func main() {
 			Memory: EVM.NewMemory(),
 			Gas : 0 ,
 		}
-		evm.DecodeInput(scanner.Text())
+		input := scanner.Text()
+		fmt.Println("input: ",input)
+		if len(input) %2 != 0 {
+			fmt.Println("Wrong input, code should be dividable by 2")
+			continue
+		}
+		err:= evm.DecodeInput(input)
+		if err != nil {
+			fmt.Println(err)
+		}
 		fmt.Println("Keccak: ",evm.KECCAK256())
 		fmt.Println("Gas consumed", evm.Gas)
 	}

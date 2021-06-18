@@ -3,6 +3,7 @@ package EVM
 import (
 	"../Stack"
 	"encoding/hex"
+	"errors"
 	"github.com/holiman/uint256"
 	"golang.org/x/crypto/sha3"
 	"strconv"
@@ -14,11 +15,11 @@ type EVM struct{
 	Memory* Memory
 }
 
-func (e* EVM) DecodeInput(input string){
+func (e* EVM) DecodeInput(input string) error{
 
 	length := len(input)
 	if length == 0 {
-		return
+		return nil
 	}
 	operation := input[0:2]
 
@@ -114,7 +115,10 @@ func (e* EVM) DecodeInput(input string){
 		e.Stack.Push(base.Hex()[2:])
 		e.Gas+=50*uint64(len(exp.Bytes()))
 		e.DecodeInput(input[2:])
+	}else{
+		return errors.New("wrong byte code")
 	}
+	return nil
 
 }
 
