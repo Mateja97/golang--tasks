@@ -30,20 +30,20 @@ func decodeLength(input string) (string,int64,int64){
     if length == 0{
         return "error",1,1
     }
+    //Validate input
     if !isHex(input[0:2]) || length %2 != 0 {
         return "error",1,1
     }
     prefix, _ := strconv.ParseInt(input[0:2], 16, 64)// taking first byte to check what type of data is in input
-
-    if prefix <= 0x7f {
-
+    
+    if prefix <= 0x7f {//input is byte itself
         return "str",0,1
-    }else if prefix <= 0xb7 && length >= 2*(prefix - 0x80){
+    }else if prefix <= 0xb7 && length >= 2*(prefix - 0x80){//short string
 
         strLen := prefix - 0x80
         return "str",2,strLen*2
 
-    } else if prefix <= 0xbf && length >= 2*(prefix-0xb7) {
+    } else if prefix <= 0xbf && length >= 2*(prefix-0xb7) { //long string
 
         offset := 2*(prefix - 0xb7)
         l, _ := strconv.ParseInt(input[2:2*offset], 16, 64) // taking length of bytes for string bigger then 55 bytes
@@ -51,10 +51,10 @@ func decodeLength(input string) (string,int64,int64){
             return "str", 2*offset, l*2
         }
         return "error",1,1
-    }else if prefix <= 0xf7 {
+    }else if prefix <= 0xf7 { //short list
         listLen:= prefix - 0xc0
         return "list",2,listLen*2
-    }else if prefix <= 0xff {
+    }else if prefix <= 0xff { // long list
         offset := 2*(prefix - 0xf7)
         l, _ := strconv.ParseInt(input[2:2*offset], 16, 64) 
         if length > (prefix - 0xf7 + l)*2{
@@ -67,22 +67,18 @@ func decodeLength(input string) (string,int64,int64){
     }
 
 }
+//Function to verify is input hex encoding
 func isHex(content string) bool {
-    dat := []byte(content)
     isHex := true
-    for _, v := range dat {
-        if v >= 48 && v <= 57 || v >= 65 && v <= 70 || v >= 97 && v <= 102 {
-            // isHex = true
-        } else {
-            isHex = false
-        }
-
+    _, err := strconv.ParseUint(content, 16, 64)
+    if err != nil {
+        isHex = false
     }
     return isHex
 }
 func main() {
 
-    file, err := os.Open("data.txt")
+    file, err := os.Open("../data.txt")
     if err != nil {
         log.Fatal(err)
     }
