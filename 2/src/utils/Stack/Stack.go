@@ -1,5 +1,5 @@
 package Stack
-import "C"
+
 type Stack struct {
 	Values []string
 }
@@ -17,8 +17,8 @@ func (s *Stack) Pop() string {
 	if s.IsEmpty() {
 		return ""
 	} else {
-		index := len((*s).Values) - 1 // Get the index of the top most element.
-		element := ((*s).Values)[index] // Index into the slice and obtain the element.
+		index := len((*s).Values) - 1     // Get the index of the top most element.
+		element := ((*s).Values)[index]   // Index into the slice and obtain the element.
 		(*s).Values = (*s).Values[:index] // Remove it from the stack by slicing it off.
 		return element
 	}
