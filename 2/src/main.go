@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"../src/utils/EVM"
+	"golang.org/x/2/src/utils/EVM"
 )
 
 func main() {

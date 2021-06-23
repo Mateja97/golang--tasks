@@ -5,8 +5,8 @@ import (
 	"errors"
 	"strconv"
 
-	"../Stack"
 	"github.com/holiman/uint256"
+	"golang.org/x/2/src/utils/Stack"
 	"golang.org/x/crypto/sha3"
 )
 
