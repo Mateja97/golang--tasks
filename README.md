@@ -11,12 +11,11 @@ Navigate to src folder and run "go run main.go"
 Input is stored in file data.txt (one line - one test case)
  
  # 2
- 
-Need to download required packages:
-1. go get github.com/holiman/uint256
-2. go get golang.org/x/crypto/sha3
+For dependencie navigate to src folder and run next commands: <br />
+go mod init golang.org/x/2/src <br />
+go mod tidy <br />
 
-Navigate to src folder and run "go run main.go"
+Run "go run main.go"
 <br />
 Input is stored in file data.txt (one line - one test case)
  
