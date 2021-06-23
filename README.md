@@ -1,6 +1,7 @@
 # golang--tasks
 
 git clone https://github.com/Mateja97/golang--tasks.git
+go version go1.13.8
 
 # 1
  
