@@ -6,7 +6,7 @@ git clone https://github.com/Mateja97/golang--tasks.git
  
 Navigate to src folder and run "go run main.go"
 &nbsp;
- Input is stored in file data.txt (one line - one test case)
+Input is stored in file data.txt (one line - one test case)
  
  # 2
  
