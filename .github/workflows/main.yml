@@ -1,12 +1,8 @@
 name: golangci-lint
 on:
   push:
-    tags:
-      - v*
     branches:
       - master
-      - main
-  pull_request:
 jobs:
   golangci:
     name: lint
@@ -18,4 +14,8 @@ jobs:
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
           version: v1.29
+      - name: Install golangci-lint
+      run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.18.0
 
+    - name: Run golangci-lint
+      run: $(go env GOPATH)/bin/golangci-lint run
