@@ -9,22 +9,31 @@ import (
 	"golang.org/x/2/src/utils/EVM"
 )
 
-func main() {
-
+func inputData() []string {
 	file, err := os.Open("../data.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-
-	scanner := bufio.NewScanner(file) // read input from file
+	scanner := bufio.NewScanner(file)
+	var data []string
 	for scanner.Scan() {
-		var evm EVM.EVM // create a stack variable of type Stack
-		evm = EVM.EVM{
+		data = append(data, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return data
+}
+func main() {
+
+	data := inputData()
+
+	for _, input := range data {
+		evm := EVM.EVM{
 			Memory: EVM.NewMemory(),
 			Gas:    0,
 		}
-		input := scanner.Text()
 
 		fmt.Println("input: ", input)
 
@@ -44,7 +53,4 @@ func main() {
 		fmt.Println("")
 	}
 
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
 }

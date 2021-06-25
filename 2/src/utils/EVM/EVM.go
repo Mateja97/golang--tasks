@@ -16,6 +16,19 @@ type EVM struct {
 	Memory *Memory
 }
 
+var Actions = map[string]interface{}{
+	"60": Push1,
+	"61": Push2,
+	"62": Push3,
+	"7f": Push32,
+	"52": Mstore,
+	"53": Mstore8,
+	"01": Add,
+	"02": Mul,
+	"05": SDiv,
+	"0A": Exp,
+}
+
 func (e *EVM) DecodeInput(input string) error {
 
 	length := len(input)
@@ -24,46 +37,12 @@ func (e *EVM) DecodeInput(input string) error {
 	}
 	operation := input[0:2]
 
-	if operation == "60" { //PUSH1
-		e.Push1(input)
+	v, ok := Actions[operation]
 
-	} else if operation == "61" { //PUSH2
-		e.Push2(input)
+	if ok {
+		offset := v.(func(*EVM, string) int)(e, input)
+		_ = e.DecodeInput(input[offset:])
 
-	} else if operation == "62" { //PUSH3
-		e.Push3(input)
-
-	} else if operation == "7f" { //PUSH32
-		e.Push32(input)
-
-	} else if operation == "52" { //MSTORE
-		e.Mstore()
-		e.DecodeInput(input[2:])
-
-	} else if operation == "53" { //MSTORE8
-
-		e.Mstore8()
-		e.DecodeInput(input[2:])
-
-	} else if operation == "01" { //ADD
-
-		e.Add()
-		e.DecodeInput(input[2:])
-
-	} else if operation == "02" { //MULL
-
-		e.Mul()
-		e.DecodeInput(input[2:])
-
-	} else if operation == "05" { //SDIV
-
-		e.SDiv()
-		e.DecodeInput(input[2:])
-
-	} else if operation == "0A" { //EXP
-
-		e.Exp()
-		e.DecodeInput(input[2:])
 	} else {
 		return errors.New("Wrong byte code")
 	}
@@ -88,28 +67,28 @@ func Encode(str string) string {
 	enc := "0x" + str[br:]
 	return enc
 }
-func (e *EVM) Push1(input string) {
+func Push1(e *EVM, input string) int {
 
 	e.Stack.Push(input[2:4])
 	e.Gas += 3
-	e.DecodeInput(input[4:])
+	return 4
 }
-func (e *EVM) Push2(input string) {
+func Push2(e *EVM, input string) int {
 	e.Stack.Push(input[2:6])
 	e.Gas += 3
-	e.DecodeInput(input[6:])
+	return 6
 }
-func (e *EVM) Push3(input string) {
+func Push3(e *EVM, input string) int {
 	e.Stack.Push(input[2:8])
 	e.Gas += 3
-	e.DecodeInput(input[8:])
+	return 8
 }
-func (e *EVM) Push32(input string) {
+func Push32(e *EVM, input string) int {
 	e.Stack.Push(input[2:66])
 	e.Gas += 3
-	e.DecodeInput(input[66:])
+	return 66
 }
-func (e *EVM) Mstore() {
+func Mstore(e *EVM, input string) int {
 	d, v := e.Stack.Pop(), e.Stack.Pop()
 	offset, _ := strconv.ParseUint(d, 16, 64)
 	value, _ := uint256.FromHex(Encode(v))
@@ -120,10 +99,11 @@ func (e *EVM) Mstore() {
 	cost := newCost - e.Memory.lastGasCost
 	e.Memory.lastGasCost = newCost
 	e.Gas += cost
+	return 2
 
 }
 
-func (e *EVM) Mstore8() {
+func Mstore8(e *EVM, input string) int {
 	d, v := e.Stack.Pop(), e.Stack.Pop()
 	offset, _ := strconv.ParseUint(d, 16, 64)
 	value, _ := uint256.FromHex(Encode(v))
@@ -133,8 +113,9 @@ func (e *EVM) Mstore8() {
 	cost := newCost - e.Memory.lastGasCost
 	e.Memory.lastGasCost = newCost
 	e.Gas += cost
+	return 2
 }
-func (e *EVM) Add() {
+func Add(e *EVM, input string) int {
 	v1, v2 := e.Stack.Pop(), e.Stack.Pop()
 
 	value1, _ := uint256.FromHex(Encode(v1))
@@ -143,8 +124,9 @@ func (e *EVM) Add() {
 	value1.Add(value1, value2)
 	e.Stack.Push(value1.Hex()[2:])
 	e.Gas += 3
+	return 2
 }
-func (e *EVM) Mul() {
+func Mul(e *EVM, input string) int {
 	v1, v2 := e.Stack.Pop(), e.Stack.Pop()
 
 	value1, _ := uint256.FromHex(Encode(v1))
@@ -153,8 +135,9 @@ func (e *EVM) Mul() {
 	value1.Mul(value1, value2)
 	e.Stack.Push(value1.Hex()[2:])
 	e.Gas += 5
+	return 2
 }
-func (e *EVM) SDiv() {
+func SDiv(e *EVM, input string) int {
 	v1, v2 := e.Stack.Pop(), e.Stack.Pop()
 
 	value1, _ := uint256.FromHex(Encode(v1))
@@ -163,9 +146,10 @@ func (e *EVM) SDiv() {
 	value1.SDiv(value1, value2)
 	e.Stack.Push(value1.Hex()[2:])
 	e.Gas += 5
+	return 2
 }
 
-func (e *EVM) Exp() {
+func Exp(e *EVM, input string) int {
 	b, ex := e.Stack.Pop(), e.Stack.Pop()
 
 	base, _ := uint256.FromHex(Encode(b))
@@ -174,4 +158,5 @@ func (e *EVM) Exp() {
 	base.Exp(base, exp)
 	e.Stack.Push(base.Hex()[2:])
 	e.Gas += 50 * uint64(len(exp.Bytes()))
+	return 2
 }
