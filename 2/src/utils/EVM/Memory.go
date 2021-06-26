@@ -14,28 +14,29 @@ func NewMemory() *Memory {
 }
 func (m *Memory) Set(offset uint64, val []byte) uint64 {
 
-	m.Resize(offset) //resize memory if needed
-	copy(m.store[offset:], val)
-	w := m.CountWords() //count words in new memory
+	m.Resize(offset + 32) //resize memory if needed
+	copy(m.store[offset:offset+32], val)
+	w := CountWords(m.store) //count words in new memory
 	return w
 }
-func (m *Memory) Set8(offset uint64, byte byte) uint64 {
+func (m *Memory) Set8(offset uint64, val byte) uint64 {
 
-	m.Resize(offset) //resize memory if needed
-	m.store[offset] = byte
-	w := m.CountWords() //count words in new memory
+	m.Resize(offset + 1) //resize memory if needed
+	m.store[offset] = val
+	w := CountWords(m.store) //count words in new memory
 	return w
 }
 
 func (m *Memory) Resize(reqSize uint64) {
-	for uint64(len(m.store)) <= reqSize { // if offset is bigger then current length - resize until data could be stored with new offset
-		m.store = append(m.store, 0)
-	}
 
+	if uint64(len(m.store)) < reqSize { // if offset is bigger then current length - resize data to be stored with new offset
+		newMemory := make([]byte, reqSize-uint64(len(m.store)))
+		m.store = append(m.store, newMemory...)
+	}
 }
 
-func (m Memory) CountWords() uint64 {
-	size := uint64(len(m.store))
+func CountWords(val []byte) uint64 {
+	size := uint64(len(val))
 	if size > math.MaxUint64-31 {
 		return math.MaxUint64/32 + 1
 	}

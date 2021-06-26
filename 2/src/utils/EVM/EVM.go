@@ -3,7 +3,6 @@ package EVM
 import (
 	"encoding/hex"
 	"errors"
-	"strconv"
 
 	"github.com/holiman/uint256"
 	"golang.org/x/2/src/utils/Stack"
@@ -16,6 +15,19 @@ type EVM struct {
 	Memory *Memory
 }
 
+var evm *EVM
+
+//Make EVM Class as singleton
+func init() {
+	evm = &EVM{
+		Memory: NewMemory(),
+		Gas:    0,
+	}
+}
+func GetInstance() *EVM {
+	return evm
+}
+
 var Actions = map[string]interface{}{
 	"60": Push1,
 	"61": Push2,
@@ -26,7 +38,7 @@ var Actions = map[string]interface{}{
 	"01": Add,
 	"02": Mul,
 	"05": SDiv,
-	"0A": Exp,
+	"0a": Exp,
 }
 
 func (e *EVM) DecodeInput(input string) error {
@@ -36,11 +48,10 @@ func (e *EVM) DecodeInput(input string) error {
 		return nil
 	}
 	operation := input[0:2]
-
-	v, ok := Actions[operation]
+	action, ok := Actions[operation]
 
 	if ok {
-		offset := v.(func(*EVM, string) int)(e, input)
+		offset := action.(func(*EVM, string) int)(e, input)
 		_ = e.DecodeInput(input[offset:])
 
 	} else {
@@ -60,11 +71,17 @@ func (e EVM) KECCAK256() string {
 //Adding 0x as prefix
 func Encode(str string) string {
 
-	br := 0
-	for string(str[br]) == "0" {
-		br++
+	i := 0
+	for i < len(str) && string(str[i]) == "0" {
+		i++
 	}
-	enc := "0x" + str[br:]
+	enc := "0x"
+	if i == len(str) {
+		enc += "0"
+
+	} else {
+		enc += str[i:]
+	}
 	return enc
 }
 func Push1(e *EVM, input string) int {
@@ -90,11 +107,11 @@ func Push32(e *EVM, input string) int {
 }
 func Mstore(e *EVM, input string) int {
 	d, v := e.Stack.Pop(), e.Stack.Pop()
-	offset, _ := strconv.ParseUint(d, 16, 64)
+	offset, _ := uint256.FromHex(Encode(d))
 	value, _ := uint256.FromHex(Encode(v))
 
 	//calculate gas by formula
-	w := e.Memory.Set(offset, value.Bytes())
+	w := e.Memory.Set(offset.Uint64(), value.Bytes())
 	newCost := 3*w + w*w/512
 	cost := newCost - e.Memory.lastGasCost
 	e.Memory.lastGasCost = newCost
@@ -105,10 +122,11 @@ func Mstore(e *EVM, input string) int {
 
 func Mstore8(e *EVM, input string) int {
 	d, v := e.Stack.Pop(), e.Stack.Pop()
-	offset, _ := strconv.ParseUint(d, 16, 64)
+	offset, _ := uint256.FromHex(Encode(d))
 	value, _ := uint256.FromHex(Encode(v))
+
 	//calculate gas by formula
-	w := e.Memory.Set8(offset, byte(value.Uint64()))
+	w := e.Memory.Set8(offset.Uint64(), byte(value.Uint64()))
 	newCost := 3*w + w*w/512
 	cost := newCost - e.Memory.lastGasCost
 	e.Memory.lastGasCost = newCost
@@ -120,7 +138,6 @@ func Add(e *EVM, input string) int {
 
 	value1, _ := uint256.FromHex(Encode(v1))
 	value2, _ := uint256.FromHex(Encode(v2))
-
 	value1.Add(value1, value2)
 	e.Stack.Push(value1.Hex()[2:])
 	e.Gas += 3
@@ -131,7 +148,6 @@ func Mul(e *EVM, input string) int {
 
 	value1, _ := uint256.FromHex(Encode(v1))
 	value2, _ := uint256.FromHex(Encode(v2))
-
 	value1.Mul(value1, value2)
 	e.Stack.Push(value1.Hex()[2:])
 	e.Gas += 5
