@@ -115,7 +115,7 @@ func Mstore(e *EVM, input string) int {
 	newCost := 3*w + w*w/512
 	cost := newCost - e.Memory.lastGasCost
 	e.Memory.lastGasCost = newCost
-	e.Gas += cost
+	e.Gas += 3 + cost
 	return 2
 
 }
@@ -130,7 +130,7 @@ func Mstore8(e *EVM, input string) int {
 	newCost := 3*w + w*w/512
 	cost := newCost - e.Memory.lastGasCost
 	e.Memory.lastGasCost = newCost
-	e.Gas += cost
+	e.Gas += 3 + cost
 	return 2
 }
 func Add(e *EVM, input string) int {
@@ -138,6 +138,7 @@ func Add(e *EVM, input string) int {
 
 	value1, _ := uint256.FromHex(Encode(v1))
 	value2, _ := uint256.FromHex(Encode(v2))
+
 	value1.Add(value1, value2)
 	e.Stack.Push(value1.Hex()[2:])
 	e.Gas += 3
@@ -148,6 +149,7 @@ func Mul(e *EVM, input string) int {
 
 	value1, _ := uint256.FromHex(Encode(v1))
 	value2, _ := uint256.FromHex(Encode(v2))
+
 	value1.Mul(value1, value2)
 	e.Stack.Push(value1.Hex()[2:])
 	e.Gas += 5
@@ -173,6 +175,6 @@ func Exp(e *EVM, input string) int {
 
 	base.Exp(base, exp)
 	e.Stack.Push(base.Hex()[2:])
-	e.Gas += 50 * uint64(len(exp.Bytes()))
+	e.Gas += 10 + 50*uint64(len(exp.Bytes()))
 	return 2
 }
