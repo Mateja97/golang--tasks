@@ -3,7 +3,9 @@ package EVM
 import (
 	"encoding/hex"
 	"errors"
+	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 	"golang.org/x/2/src/utils/Stack"
 	"golang.org/x/crypto/sha3"
@@ -16,7 +18,7 @@ type EVM struct {
 }
 
 var evm *EVM
-var mod *uint256.Int = uint256.NewInt(0).Exp(uint256.NewInt(2), uint256.NewInt(256)) //2^256
+var mod, _ = uint256.FromBig(new(big.Int).Sub(new(big.Int).Lsh(common.Big1, 256), common.Big1)) //max uint256 value
 
 //Make EVM Class as singleton
 func init() {
