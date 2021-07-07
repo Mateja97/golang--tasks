@@ -3,7 +3,6 @@ package EVM
 import (
 	"encoding/hex"
 	"errors"
-	"math"
 
 	"github.com/holiman/uint256"
 	"golang.org/x/2/src/utils/Stack"
@@ -17,10 +16,11 @@ type EVM struct {
 }
 
 var evm *EVM
-var mod *uint256.Int = uint256.NewInt(uint64(math.Pow(2, 32)))
+var mod *uint256.Int = uint256.NewInt(0).Exp(uint256.NewInt(2), uint256.NewInt(256)) //2^256
 
 //Make EVM Class as singleton
 func init() {
+
 	evm = &EVM{
 		Memory: NewMemory(),
 		Gas:    0,
