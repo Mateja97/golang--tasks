@@ -3,6 +3,7 @@ package EVM
 import (
 	"encoding/hex"
 	"errors"
+	"math"
 
 	"github.com/holiman/uint256"
 	"golang.org/x/2/src/utils/Stack"
@@ -16,6 +17,7 @@ type EVM struct {
 }
 
 var evm *EVM
+var mod *uint256.Int = uint256.NewInt(uint64(math.Pow(2, 32)))
 
 //Make EVM Class as singleton
 func init() {
@@ -139,8 +141,9 @@ func Add(e *EVM, input string) int {
 	value1, _ := uint256.FromHex(Encode(v1))
 	value2, _ := uint256.FromHex(Encode(v2))
 
-	value1.Add(value1, value2)
+	value1.AddMod(value1, value2, mod)
 	e.Stack.Push(value1.Hex()[2:])
+
 	e.Gas += 3
 	return 2
 }
@@ -150,7 +153,7 @@ func Mul(e *EVM, input string) int {
 	value1, _ := uint256.FromHex(Encode(v1))
 	value2, _ := uint256.FromHex(Encode(v2))
 
-	value1.Mul(value1, value2)
+	value1.MulMod(value1, value2, mod)
 	e.Stack.Push(value1.Hex()[2:])
 	e.Gas += 5
 	return 2
@@ -174,6 +177,7 @@ func Exp(e *EVM, input string) int {
 	exp, _ := uint256.FromHex(Encode(ex))
 
 	base.Exp(base, exp)
+
 	e.Stack.Push(base.Hex()[2:])
 	e.Gas += 10 + 50*uint64(len(exp.Bytes()))
 	return 2
