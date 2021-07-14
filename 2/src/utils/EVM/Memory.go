@@ -15,8 +15,17 @@ func NewMemory() *Memory {
 func (m *Memory) Set(offset uint64, val []byte) uint64 {
 
 	m.Resize(offset + 32) //resize memory if needed
-	copy(m.store[offset:], val)
+	l := uint64(len(val))
+	if l < 32 {
+		newVal := make([]byte, 32)
+		copy(newVal[32-l:], val)
+		copy(m.store[offset:], newVal)
+
+	} else {
+		copy(m.store[offset:], val)
+	}
 	w := CountWords(m.store) //count words in new memory
+
 	return w
 }
 func (m *Memory) Set8(offset uint64, val byte) uint64 {
